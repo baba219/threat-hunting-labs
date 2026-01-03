@@ -1,0 +1,42 @@
+schema_version: 2
+default_locale: en
+title: Artifact Exploration and IAM Compromise
+description: Investigate a stealthy IAM compromise using Kibana and preloaded cloud
+  logs.
+instruction:
+  type: md
+  uri: instructions/en.md
+duration: 90
+max_duration: 90
+credits: 0
+level: fundamental
+tags:
+product_tags:
+role_tags:
+domain_tags:
+resources: []
+environment:
+  resources:
+  - type: gcp_project
+    variant: gcpfree
+    id: project_0
+    startup_script:
+      type: qwiklabs
+      path: terraform_template_QwikLabs_Lab1_v0
+    ssh_key_user: user_0
+    allowed_locations:
+    - us-central1-a
+    - us-central1-b
+    - us-east1-b
+    - us-east1-c
+    - us-west1-a
+    - us-west1-b
+  - type: gcp_user
+    id: user_0
+    permissions:
+    - project: project_0
+      roles:
+      - roles/owner
+  student_visible_outputs:
+  - label: Open Kibana
+    reference: project_0.startup_script.<custom_script_property>
