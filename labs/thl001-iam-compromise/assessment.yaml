@@ -1,0 +1,46 @@
+passing_percentage: 80
+
+steps:
+- title: Identify and save suspicious IAM policy updates
+  locale_id: step-2
+  maximum_score: 25
+  student_messages:
+    success: "Step completed!"
+    not_found: "Saved query THL01-Step2-IAM-Policy-Updates not found. Save it in Kibana using the exact name."
+  services:
+  - project_0.ComputeV1
+  - user_0.SSH
+  method_name: step_two_check
+
+- title: Detect abnormal successful logins
+  locale_id: step-3
+  maximum_score: 25
+  student_messages:
+    success: "Step completed!"
+    not_found: "Saved query THL01-Step3-Auth-Outside-Canada not found. Save it in Kibana using the exact name."
+  services:
+  - project_0.ComputeV1
+  - user_0.SSH
+  method_name: step_three_check
+
+- title: Investigate service account key activity
+  locale_id: step-4
+  maximum_score: 25
+  student_messages:
+    success: "Step completed!"
+    not_found: "Saved query THL01-Step4-Service-Account-Key not found. Save it in Kibana using the exact name."
+  services:
+  - project_0.ComputeV1
+  - user_0.SSH
+  method_name: step_four_check
+
+- title: Trace compromised key usage
+  locale_id: step-5
+  maximum_score: 25
+  student_messages:
+    success: "Step completed!"
+    not_found: "Saved query THL01-Step5-Key-Usage not found. Save it in Kibana using the exact name."
+  services:
+  - project_0.ComputeV1
+  - user_0.SSH
+  method_name: step_five_check

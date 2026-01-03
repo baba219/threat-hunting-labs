@@ -39,4 +39,4 @@ environment:
       - roles/owner
   student_visible_outputs:
   - label: Open Kibana
-    reference: project_0.startup_script.<custom_script_property>
+    reference: project_0.startup_script.kibana_url
