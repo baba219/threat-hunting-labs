@@ -124,10 +124,10 @@ In this task, you confirm what telemetry is available and how the investigation 
 2. In the navigation menu, click **Discover**.
 3. In Discover, open the **Data view** selector, and then review the available data views:
 
-* auth-logs
-* audit-logs
-* service-accounts
-* iam-activity
+    * auth-logs
+    * audit-logs
+    * service-accounts
+    * iam-activity
 
 4. If available, click **Dashboard** or **Lens** to review high-level trends.
 
