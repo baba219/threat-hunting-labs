@@ -165,6 +165,22 @@ event.action:"iam.policy.update"
 **Note:** A single IAM policy update is not enough to prove malicious activity. You validate it using authentication and service account evidence in later tasks.
 </ql-infobox></div>
 
+**Save your investigation step**
+
+Save this query in Kibana using the **exact name**:
+
+```
+THL01-Step2-IAM-Policy-Updates
+```
+
+Click **Save** and confirm that the saved query appears in your list of saved searches.
+
+Click __Check my progress__ to verify the objective.
+  <ql-activity-tracking step=2>
+    Identify and save suspicious IAM policy updates
+  </ql-activity-tracking>
+
+
 **Expected result**
 
 You identify IAM policy updates that require validation through correlation.
