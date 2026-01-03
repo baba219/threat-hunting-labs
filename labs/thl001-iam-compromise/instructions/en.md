@@ -211,6 +211,22 @@ and not geo.country_name:"Canada"
 
 5. Note the usernames and timestamps that you want to validate.
 
+**Save your investigation step**
+
+Save this query in Kibana using the **exact name**:
+
+```
+THL01-Step3-Auth-Outside-Canada
+```
+
+Click **Save** and confirm that the saved query appears in your list of saved searches.
+
+Click __Check my progress__ to verify the objective.
+  <ql-activity-tracking step=3>
+    Detect abnormal successful logins
+  </ql-activity-tracking>
+
+
 **Expected result**
 
 You identify candidate user accounts for deeper investigation and correlation.
@@ -239,6 +255,21 @@ and actor.email:"bob@corp.com"
 * Whether the key action aligns with earlier IAM updates or login anomalies
 * Whether the service account appears in other datasets
 
+**Save your investigation step**
+
+Save this query in Kibana using the **exact name**:
+
+```
+THL01-Step4-Service-Account-Key
+```
+
+Click **Save** and confirm that the saved query appears in your list of saved searches.
+
+Click __Check my progress__ to verify the objective.
+  <ql-activity-tracking step=4>
+    Investigate service account key activity
+  </ql-activity-tracking>
+
 **Expected result**
 
 You identify service account key activity that could enable persistence or pivoting.
@@ -265,6 +296,21 @@ service.key_id:"key-99999"
 * Actions performed using the key
 * Resources accessed
 * Whether the activity deviates from normal service account behavior
+
+**Save your investigation step**
+
+Save this query in Kibana using the **exact name**:
+
+```
+THL01-Step5-Key-Usage
+```
+
+Click **Save** and confirm that the saved query appears in your list of saved searches.
+
+Click __Check my progress__ to verify the objective.
+  <ql-activity-tracking step=5>
+    Trace compromised key usage
+  </ql-activity-tracking>
 
 **Expected result**
 
