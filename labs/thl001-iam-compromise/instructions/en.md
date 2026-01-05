@@ -96,7 +96,7 @@ You should see the following data views:
 You successfully access Kibana and confirm that all required data views are available for the lab.
 
 
-## Scenario 1
+## Scenario
 
 
 
