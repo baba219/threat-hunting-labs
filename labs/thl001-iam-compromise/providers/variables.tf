@@ -13,14 +13,3 @@ variable "gcp_zone" {
   description = "The GCP zone to apply this config to."
 }
 
-variable "lab_username" {
-  type        = string
-  description = "Qwiklabs student username"
-}
-
-variable "lab_password" {
-  type        = string
-  description = "Qwiklabs student password"
-  sensitive   = true
-}
-

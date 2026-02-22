@@ -6,8 +6,8 @@ description: Investigate a stealthy IAM compromise using Kibana and preloaded cl
 instruction:
   type: md
   uri: instructions/en.md
-duration: 90
-max_duration: 90
+duration: 120
+max_duration: 120
 credits: 0
 level: fundamental
 tags:
@@ -18,19 +18,16 @@ resources: []
 environment:
   resources:
   - type: gcp_project
-    variant: gcpfree
     id: project_0
     startup_script:
       type: qwiklabs
-      path: terraform_template_QwikLabs_Lab1_v0
+      path: terraform
     ssh_key_user: user_0
     allowed_locations:
     - us-central1-a
-    - us-central1-b
     - us-east1-b
-    - us-east1-c
+    - us-east4-a
     - us-west1-a
-    - us-west1-b
   - type: gcp_user
     id: user_0
     permissions:
@@ -38,5 +35,62 @@ environment:
       roles:
       - roles/owner
   student_visible_outputs:
-  - label: Open Kibana
+  - label: Kibana URL
     reference: project_0.startup_script.kibana_url
+  - label: Kibana Username
+    reference: project_0.startup_script.lab_user
+  - label: Kibana Password
+    reference: project_0.startup_script.lab_pass
+  - label: GCP Console
+    reference: project_0.console_url
+  - label: Username
+    reference: user_0.username
+  - label: Password
+    reference: user_0.password
+assessment:
+  passing_percentage: 100
+  steps:
+  - title: Save investigation query (THL01-IAM-Policy-Updates)
+    locale_id: b125bf38-b6f6-48ce-a3e6-c9153562ba69
+    maximum_score: 25
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL01-IAM-Policy-Updates.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_1_check
+  - title: Save investigation query (THL01-Auth-Outside-Canada)
+    locale_id: e4590c2f-7755-4105-aeb2-2de8181faf25
+    maximum_score: 25
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL01-Auth-Outside-Canada.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_2_check
+  - title: Save investigation query (THL01-Service-Account-Key)
+    locale_id: 01c24541-c620-4cd8-832f-0bb9a446a9e0
+    maximum_score: 25
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL01-Service-Account-Key.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_3_check
+  - title: Save investigation query (THL01-Key-Usage)
+    locale_id: b4ad6a38-83c3-4ddf-b069-c9c4fc4a832b
+    maximum_score: 25
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL01-Key-Usage.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_4_check

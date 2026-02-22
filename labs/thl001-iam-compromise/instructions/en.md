@@ -43,9 +43,9 @@ Before you start, you should be familiar with:
 
 Read these instructions carefully before starting the lab.
 
-Labs are timed and you cannot pause them. When you click Start Lab, a timer starts and shows how long the lab environment is available to you.
-
-This hands-on lab gives you access to a real investigation environment, not a simulation or demo. You receive temporary credentials that you use to sign in to Kibana for the duration of the lab.
+* **Labs are timed.** When you click **Start Lab**, the timer starts immediately and shows how long your lab environment will remain available.
+* **You cannot pause the lab.** Once the lab has started, the time continues to run until the session ends.
+* This is a **simulation environment**. You will receive **temporary credentials** to sign in to Kibana for the duration of the lab.
 
 To complete this lab, you need:
 
@@ -56,26 +56,31 @@ To complete this lab, you need:
 **Note:** Use an Incognito or private browser window to run this lab. This prevents conflicts with any existing sessions that may affect access to the lab environment.
 </ql-infobox></div>
 
-* Time to complete the lab is limited. Once you start the lab, you cannot pause it.
+<div><ql-infobox>
+
+**Note:** After clicking **Start Lab**, please allow **5 minutes** for the environment to fully initialize. During this time, the virtual machine, Elasticsearch, and Kibana services are starting and data is being ingested. If Kibana does not load immediately, wait a few minutes and refresh the page. The lab timer continues to run during initialization.
+</ql-infobox></div>
 
 **How to start your lab and access Kiban**a
 
-1. Click the **Start Lab** button.
-2. In the left panel, locate the temporary **Username** and **Password** provided for this lab.
-3. Click the **Open Kibana** button.
+1. Click **Start Lab** to launch your investigation environment.
 
-A new browser tab opens and displays the Kibana sign-in page.
+On the left is the **Lab details** pane which is populated with the temporary credentials needed for this lab.
+
+<img src="img/b7ecc7f4b10e35f2.png" alt="b7ecc7f4b10e35f2.png"  width="238.89" />
+
+2. Wait for the environment to initialize. Allow **5 minutes** for Kibana to become accessible.
+3. In the left panel, copy the **Kibana URL** provided.
+4. Paste the URL into your browser and press **Enter**.
+5. If you see a message saying **"This site doesn't support a secure connection"**, click **Continue to site** to proceed.
+6. In the left panel, copy the **Kibana Username** and **Kibana Password**.
+7. Paste the credentials into the login page and click **Log in**.
+8. Dismiss initial warnings inside Kibana.
 
 <div><ql-infobox>
 
 **Tip:** Keep the lab instructions and the Kibana page open in separate windows, side-by-side, to make investigation easier.
 </ql-infobox></div>
-
-4. On the Kibana sign-in page, paste the **Username** from the left panel.
-5. Paste the corresponding **Password**.
-6. Click **Log in**.
-
-After a few moments, the Kibana interface loads and you can begin the investigation.
 
 **Verify access to the lab environment**
 
@@ -122,13 +127,7 @@ In this task, you confirm what telemetry is available and how the investigation 
 
 1. Log in to Kibana using the provided credentials.
 2. In the navigation menu, click **Discover**.
-3. In Discover, open the **Data view** selector, and then review the available data views:
-
-* auth-logs
-* audit-logs
-* service-accounts
-* iam-activity
-
+3. In Discover, open the **Data view** selector, and then review the available data views: auth-logs, audit-logs, service-accounts and iam-activity.
 4. If available, click **Dashboard** or **Lens** to review high-level trends.
 
 **Expected result**
@@ -146,19 +145,22 @@ In this task, you find IAM policy changes that look valid but may be suspicious 
 
 1. In the navigation menu, click **Discover**.
 2. For **Data view**, select **audit-logs**.
-3. In the query bar, paste the following query, and then press ENTER.
+3.  Set time range: **Last 24 hours** (or Last 7 days)
+4. In the query bar, paste the following query, and then press ENTER.
 
 ```
-event.action:"iam.policy.update"
+event.action:"setIamPolicy" and iam.change:"add"
 ```
 
-4. Identify policy updates that involve elevated roles, such as:
+5. Now narrow to **high-impact roles**:
 
-* roles/owner
-* roles/editor
-* roles/storage.admin
+```
+event.action:"setIamPolicy" 
+and iam.change:"add" 
+and iam.role:("roles/owner" or "roles/editor" or "roles/storage.admin")
+```
 
-5. For any candidate event, note the actor identity and timestamp.
+6. Identify suspicious candidates, and then note the following fields: `actor.email`, `@timestamp`, `iam.role`, `source.ip`, and `geo.country_name`.
 
 <div><ql-infobox>
 
@@ -170,16 +172,10 @@ event.action:"iam.policy.update"
 Save this query in Kibana using the **exact name**:
 
 ```
-THL01-Step2-IAM-Policy-Updates
+THL01-IAM-Policy-Updates
 ```
 
 Click **Save** and confirm that the saved query appears in your list of saved searches.
-
-Click __Check my progress__ to verify the objective.
-  <ql-activity-tracking step=2>
-    Identify and save suspicious IAM policy updates
-  </ql-activity-tracking>
-
 
 **Expected result**
 
@@ -195,7 +191,7 @@ In this task, you identify authentication anomalies that may indicate valid acco
 **Search for successful logins outside Canada**
 
 1. In the navigation menu, click **Discover**.
-2. For **Data view**, select **auth-logs**.
+2. Select Data view: **auth-logs**.
 3. In the query bar, paste the following query, and then press ENTER.
 
 ```
@@ -204,11 +200,7 @@ and event.outcome:"success"
 and not geo.country_name:"Canada"
 ```
 
-4. Review the results and identify accounts with:
-
-* Multiple locations over a short period
-* A location that does not match their baseline pattern
-
+4. Review the results, and then identify accounts that exhibit multiple geographic locations within a short time frame or behavior that deviates from their normal access pattern.
 5. Note the usernames and timestamps that you want to validate.
 
 **Save your investigation step**
@@ -216,16 +208,10 @@ and not geo.country_name:"Canada"
 Save this query in Kibana using the **exact name**:
 
 ```
-THL01-Step3-Auth-Outside-Canada
+THL01-Auth-Outside-Canada
 ```
 
 Click **Save** and confirm that the saved query appears in your list of saved searches.
-
-Click __Check my progress__ to verify the objective.
-  <ql-activity-tracking step=3>
-    Detect abnormal successful logins
-  </ql-activity-tracking>
-
 
 **Expected result**
 
@@ -241,34 +227,31 @@ In this task, you determine whether service account key operations support persi
 **Search for service account key events**
 
 1. In the navigation menu, click **Discover**.
-2. For **Data view**, select **service-accounts**.
+2. Select Data view: **service-accounts**.
 3. In the query bar, paste the following query, and then press ENTER.
+
+```
+event.action:"createServiceAccountKey"
+```
+
+4. Now focus on suspicious actor:
 
 ```
 event.action:"createServiceAccountKey" 
 and actor.email:"bob@corp.com"
 ```
 
-4. Identify:
-
-* Which service account is involved
-* Whether the key action aligns with earlier IAM updates or login anomalies
-* Whether the service account appears in other datasets
+5. Identify the service account and key ID involved, note the timestamp, and then correlate this activity with the suspicious authentication events from Task 3 and the IAM policy changes from Task 2.
 
 **Save your investigation step**
 
 Save this query in Kibana using the **exact name**:
 
 ```
-THL01-Step4-Service-Account-Key
+THL01-Service-Account-Key
 ```
 
 Click **Save** and confirm that the saved query appears in your list of saved searches.
-
-Click __Check my progress__ to verify the objective.
-  <ql-activity-tracking step=4>
-    Investigate service account key activity
-  </ql-activity-tracking>
 
 **Expected result**
 
@@ -284,33 +267,30 @@ In this task, you validate whether a specific key is used to access sensitive re
 **Search for activity associated with a key ID**
 
 1. In the navigation menu, click **Discover**.
-2. For **Data view**, select **iam-activity**.
+2. Select Data view: **iam-activity**.
 3. In the query bar, paste the following query, and then press ENTER.
 
 ```
 service.key_id:"key-99999"
 ```
 
-4. Review:
+4. Review the results and determine the event action, the resources accessed, and the originating IP address and geographic location.
+5. To isolate **download-like** behavior:
 
-* Actions performed using the key
-* Resources accessed
-* Whether the activity deviates from normal service account behavior
+```
+service.key_id:"key-99999" 
+and event.action:("data_download" or "data_access" or "token_generate")
+```
 
 **Save your investigation step**
 
 Save this query in Kibana using the **exact name**:
 
 ```
-THL01-Step5-Key-Usage
+THL01-Key-Usage
 ```
 
 Click **Save** and confirm that the saved query appears in your list of saved searches.
-
-Click __Check my progress__ to verify the objective.
-  <ql-activity-tracking step=5>
-    Trace compromised key usage
-  </ql-activity-tracking>
 
 **Expected result**
 
@@ -325,16 +305,28 @@ In this task, you combine evidence into a defensible narrative. You build a time
 
 **Build a timeline and map techniques**
 
-1. Identify the most likely initial access event (valid credential use).
-2. Correlate authentication anomalies to IAM policy updates by timestamp.
-3. Connect IAM changes to service account key activity.
-4. Confirm sensitive resource access using service account usage evidence.
+1. **Initial access**: suspicious logins (valid account):
+
+Evidence: auth-logs (geo anomalies / short-window multi-country)
+
+2. **Privilege escalation**: IAM role added (ex: roles/owner):
+
+Evidence: audit-logs (event.action:setIamPolicy, iam.role:roles/owner, actor.email)
+
+3. **Persistence / pivot**: service account key created
+
+Evidence: service-accounts (createServiceAccountKey, service.key_id)
+
+4. **Actions on objectives**: resource access + downloads
+
+Evidence: iam-activity (service.key_id:key-99999 → token_generate → data_download)
+
 5. Map evidence to MITRE ATT&CK techniques:
 
-* T1078 – Valid Accounts
-* T1098 – Account Manipulation
-* T1550.001 – Use of Authentication Tokens
-* T1078.004 – Cloud Accounts
+* T1078 – Valid Accounts (auth anomalies)
+* T1098 – Account Manipulation (IAM role changes)
+* T1550.001 – Use of Authentication Tokens (token_generate)
+* T1078.004 – Cloud Accounts (service accounts + keys)
 
 **Expected result**
 
