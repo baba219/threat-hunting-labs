@@ -41,17 +41,11 @@ environment:
     reference: project_0.startup_script.lab_user
   - label: Kibana Password
     reference: project_0.startup_script.lab_pass
-  - label: GCP Console
-    reference: project_0.console_url
-  - label: Username
-    reference: user_0.username
-  - label: Password
-    reference: user_0.password
 assessment:
-  passing_percentage: 100
+  passing_percentage: 80
   steps:
-  - title: Save investigation query (THL01-IAM-Policy-Updates)
-    locale_id: b125bf38-b6f6-48ce-a3e6-c9153562ba69
+  - title: Validate IAM Policy Modification Detection
+    locale_id: d77254f3-d0a5-4d6c-a3e5-2064f38f0abc
     maximum_score: 25
     student_messages:
       success: Step completed! Saved search found in Kibana.
@@ -61,8 +55,8 @@ assessment:
     - project_0.ComputeV1
     - user_0.SSH
     method_name: step_1_check
-  - title: Save investigation query (THL01-Auth-Outside-Canada)
-    locale_id: e4590c2f-7755-4105-aeb2-2de8181faf25
+  - title: Validate Suspicious Authentication Activity Detection
+    locale_id: 206937e1-7a6b-45a0-a335-8c8f943e9aea
     maximum_score: 25
     student_messages:
       success: Step completed! Saved search found in Kibana.
@@ -72,8 +66,8 @@ assessment:
     - project_0.ComputeV1
     - user_0.SSH
     method_name: step_2_check
-  - title: Save investigation query (THL01-Service-Account-Key)
-    locale_id: 01c24541-c620-4cd8-832f-0bb9a446a9e0
+  - title: Validate Service Account Key Creation Detection
+    locale_id: a6332faf-4a59-4b31-9fe6-2c83936baa7c
     maximum_score: 25
     student_messages:
       success: Step completed! Saved search found in Kibana.
@@ -83,8 +77,8 @@ assessment:
     - project_0.ComputeV1
     - user_0.SSH
     method_name: step_3_check
-  - title: Save investigation query (THL01-Key-Usage)
-    locale_id: b4ad6a38-83c3-4ddf-b069-c9c4fc4a832b
+  - title: Validate Compromised Key Usage Investigation
+    locale_id: a25ed2ad-b9a3-4799-a642-3a4fd8754520
     maximum_score: 25
     student_messages:
       success: Step completed! Saved search found in Kibana.

@@ -1,4 +1,4 @@
-def check(handles:, resources:, maximum_score:)
+def step_4_check(handles:, resources:, maximum_score:)
   begin
     require "json"
 
