@@ -149,7 +149,7 @@ In this task, you find IAM policy changes that look valid but may be suspicious 
 
 1. In the navigation menu, click **Discover**.
 2. For **Data view**, select **audit-logs**.
-3.  Set time range: **Last 24 hours** (or Last 7 days)
+3.  Set time range: **Last 7 days**
 4. In the query bar, paste the following query, and then press ENTER.
   
   ```
@@ -179,7 +179,6 @@ Evaluate:
 
 * Is the actor expected to modify IAM policies? 
 * Does the geographic location match normal behavior? 
-* Did this event occur shortly after an unusual login?
 * Did this event occur shortly after an unusual login?
 
 
