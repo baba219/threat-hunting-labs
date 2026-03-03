@@ -69,7 +69,7 @@ To complete this lab, you need:
 
 On the left is the **Lab details** pane which is populated with the temporary credentials needed for this lab.
 
-![IAM Attack Diagram](https://raw.githubusercontent.com/baba219/threat-hunting-labs/baba-structure-gps-thr/labs/thl001-iam-compromise/instructions/img/b7ecc7f4b10e35f2.png)
+![IAM Attack Diagram](https://raw.githubusercontent.com/baba219/threat-hunting-labs/baba-structure-gps-thr/labs/thl001-iam-compromise/instructions/img/Screenshot%202026-03-03%20072948.png)
 
 ### Step 2: Access Kibana
 
