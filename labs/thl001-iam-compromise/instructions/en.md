@@ -100,7 +100,7 @@ You should see the following data views:
 * service-accounts
 * iam-activity
 
-**Expected result**
+**Expected result:**
 
 You successfully access Kibana and confirm that all required data views are available for the lab.
 
@@ -134,7 +134,7 @@ In this task, you confirm what telemetry is available and how the investigation 
 3. In Discover, open the **Data view** selector, and then review the available data views: auth-logs, audit-logs, service-accounts and iam-activity.
 4. If available, click **Dashboard** or **Lens** to review high-level trends.
 
-**Expected result**
+**Expected result:**
 
 You confirm which data views exist and how to pivot between them during an investigation.
 
@@ -196,7 +196,7 @@ THL01-IAM-Policy-Updates
 
 Click **Save** and confirm that the saved query appears in your list of saved searches.
 
-**Expected result**
+**Expected result:**
 
 You identify IAM policy updates that require validation through correlation.
 
@@ -255,7 +255,7 @@ THL01-Auth-Outside-Canada
 
 Click **Save** and confirm that the saved query appears in your list of saved searches.
 
-**Expected result**
+**Expected result:**
 
 You identify candidate user accounts for deeper investigation and correlation.
 
@@ -319,7 +319,7 @@ THL01-Service-Account-Key
 
 Click **Save** and confirm that the saved query appears in your list of saved searches.
 
-**Expected result**
+**Expected result:**
 
 You identify service account key activity that could enable persistence or pivoting.
 
@@ -383,7 +383,7 @@ THL01-Key-Usage
 
 Click **Save** and confirm that the saved query appears in your list of saved searches.
 
-**Expected result**
+**Expected result:**
 
 You confirm whether service account activity supports attacker pivoting and resource access.
 
@@ -479,7 +479,7 @@ Your narrative should explain:
 * How events correlate across data views
 * Why the behavior represents coordinated identity abuse
 
-**Expected result**
+**Expected result:**
 
 You produce a structured attack timeline supported by log evidence and mapped to MITRE ATT&CK techniques.
 
