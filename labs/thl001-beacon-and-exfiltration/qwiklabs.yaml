@@ -1,0 +1,90 @@
+schema_version: 2
+default_locale: en
+title: Artifact Exploration and IAM Compromise
+description: Investigate a stealthy IAM compromise using Kibana and preloaded cloud
+  logs.
+instruction:
+  type: md
+  uri: instructions/en.md
+duration: 120
+max_duration: 120
+credits: 0
+level: fundamental
+tags:
+product_tags:
+role_tags:
+domain_tags:
+resources: []
+environment:
+  resources:
+  - type: gcp_project
+    id: project_0
+    startup_script:
+      type: qwiklabs
+      path: terraform
+    ssh_key_user: user_0
+    allowed_locations:
+    - us-central1-a
+    - us-east1-b
+    - us-east4-a
+    - us-west1-a
+  - type: gcp_user
+    id: user_0
+    permissions:
+    - project: project_0
+      roles:
+      - roles/owner
+  student_visible_outputs:
+  - label: Kibana URL
+    reference: project_0.startup_script.kibana_url
+  - label: Kibana Username
+    reference: project_0.startup_script.lab_user
+  - label: Kibana Password
+    reference: project_0.startup_script.lab_pass
+assessment:
+  passing_percentage: 80
+  steps:
+  - title: Validate IAM Policy Modification Detection
+    locale_id: d77254f3-d0a5-4d6c-a3e5-2064f38f0abc
+    maximum_score: 25
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL01-IAM-Policy-Updates.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_1_check
+  - title: Validate Suspicious Authentication Activity Detection
+    locale_id: 206937e1-7a6b-45a0-a335-8c8f943e9aea
+    maximum_score: 25
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL01-Auth-Outside-Canada.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_2_check
+  - title: Validate Service Account Key Creation Detection
+    locale_id: a6332faf-4a59-4b31-9fe6-2c83936baa7c
+    maximum_score: 25
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL01-Service-Account-Key.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_3_check
+  - title: Validate Compromised Key Usage Investigation
+    locale_id: a25ed2ad-b9a3-4799-a642-3a4fd8754520
+    maximum_score: 25
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL01-Key-Usage.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_4_check
