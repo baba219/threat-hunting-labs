@@ -21,7 +21,7 @@ def step_2_check(handles:, resources:, maximum_score:)
     instance_name = resources["project_0"]["startup_script.vm_name"].to_s.strip
 
     # >>> CHANGE ONLY THIS PER STEP <<<
-    target_title = "THL01-Auth-Outside-Canada"
+    target_title = "THL02-DNS-telemetry"
 
     inst = compute.get_instance(project_id, lab_zone, instance_name, freeze_args: true)
     unless inst

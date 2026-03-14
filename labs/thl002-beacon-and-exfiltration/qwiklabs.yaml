@@ -1,11 +1,12 @@
 schema_version: 2
 default_locale: en
-title: Artifact Exploration and IAM Compromise
-description: Investigate a stealthy IAM compromise using Kibana and preloaded cloud
-  logs.
+title: Beacon and Exfiltration
+description: Investigate covert C2 beaconing and cloud data exfiltration using Kibana
+  and preloaded network, DNS, workload, and storage audit logs. Correlate multi-source
+  telemetry to reconstruct a stealthy attack timeline aligned to MITRE ATT&CK.
 instruction:
   type: md
-  uri: instructions/en.md
+  uri: instructions/lab_2.md
 duration: 120
 max_duration: 120
 credits: 0
@@ -44,47 +45,58 @@ environment:
 assessment:
   passing_percentage: 80
   steps:
-  - title: Validate IAM Policy Modification Detection
-    locale_id: d77254f3-d0a5-4d6c-a3e5-2064f38f0abc
-    maximum_score: 25
+  - title: Validate Suspicious Beacon Detection
+    locale_id: 7923456a-1bad-4a79-bd98-a74d313c207f
+    maximum_score: 20
     student_messages:
       success: Step completed! Saved search found in Kibana.
       no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
-      no_saved_search: Please save the query exactly as THL01-IAM-Policy-Updates.
+      no_saved_search: Please save the query exactly as THL02-Beacon-Detection.
     services:
     - project_0.ComputeV1
     - user_0.SSH
     method_name: step_1_check
-  - title: Validate Suspicious Authentication Activity Detection
-    locale_id: 206937e1-7a6b-45a0-a335-8c8f943e9aea
-    maximum_score: 25
+  - title: Validate DNS Correlation
+    locale_id: ee3560e2-1122-425f-9c72-408cd6e51b9d
+    maximum_score: 20
     student_messages:
       success: Step completed! Saved search found in Kibana.
       no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
-      no_saved_search: Please save the query exactly as THL01-Auth-Outside-Canada.
+      no_saved_search: Please save the query exactly as THL02-DNS-telemetry.
     services:
     - project_0.ComputeV1
     - user_0.SSH
     method_name: step_2_check
-  - title: Validate Service Account Key Creation Detection
-    locale_id: a6332faf-4a59-4b31-9fe6-2c83936baa7c
-    maximum_score: 25
+  - title: Validate Data Staging Detection
+    locale_id: 4a88e0a4-cbe0-418c-9c9f-e8297d0fd0a2
+    maximum_score: 20
     student_messages:
       success: Step completed! Saved search found in Kibana.
       no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
-      no_saved_search: Please save the query exactly as THL01-Service-Account-Key.
+      no_saved_search: Please save the query exactly as THL02-Workload-Telemetry.
     services:
     - project_0.ComputeV1
     - user_0.SSH
     method_name: step_3_check
-  - title: Validate Compromised Key Usage Investigation
-    locale_id: a25ed2ad-b9a3-4799-a642-3a4fd8754520
-    maximum_score: 25
+  - title: Validate Large Outbound Transfer Detection
+    locale_id: b56e4758-790f-4ccf-9f6a-1f40214cd3b4
+    maximum_score: 20
     student_messages:
       success: Step completed! Saved search found in Kibana.
       no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
-      no_saved_search: Please save the query exactly as THL01-Key-Usage.
+      no_saved_search: Please save the query exactly as THL02-Outbound-Transfers.
     services:
     - project_0.ComputeV1
     - user_0.SSH
     method_name: step_4_check
+  - title: Validate Cloud Storage Exfiltration
+    locale_id: fafda30e-46da-4e01-9f5f-7017d5d68ee0
+    maximum_score: 20
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL02-Exfiltration-Cloud-Storage.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_5_check

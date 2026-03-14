@@ -21,7 +21,7 @@ def step_4_check(handles:, resources:, maximum_score:)
     instance_name = resources["project_0"]["startup_script.vm_name"].to_s.strip
 
     # >>> CHANGE ONLY THIS PER STEP <<<
-    target_title = "THL01-Key-Usage"
+    target_title = "THL02-Outbound-Transfers"
 
     inst = compute.get_instance(project_id, lab_zone, instance_name, freeze_args: true)
     unless inst
