@@ -74,7 +74,7 @@ To complete this lab, you need:
 
 On the left is the **Lab details** pane which is populated with the temporary credentials needed for this lab.
 
-![Workspace Attack Diagram](https://raw.githubusercontent.com/baba219/threat-hunting-labs/baba-structure-gps-thr/labs/thl003-workspace-exfiltration/instructions/img/Screenshot%202026-03-21%20120000.png)
+![Workspace Attack Diagram](https://raw.githubusercontent.com/baba219/threat-hunting-labs/baba-structure-gps-thr/labs/thl003-workspace-exfiltration/instructions/img/Screenshot%202026-03-03%20072948.png)
 
 ### Step 2: Access Kibana
 
@@ -127,7 +127,7 @@ The attacker:
 
 Your goal is to detect the phishing activity, pivot into identity and mailbox telemetry, identify suspicious file access and sharing, and confirm exfiltration.
 
-![Workspace Attack Diagram](https://raw.githubusercontent.com/baba219/threat-hunting-labs/baba-structure-gps-thr/labs/thl003-workspace-exfiltration/instructions/img/Screenshot%202026-03-21%20121000.png)
+![Workspace Attack Diagram](https://raw.githubusercontent.com/baba219/threat-hunting-labs/baba-structure-gps-thr/labs/thl003-workspace-exfiltration/instructions/img/Screenshot%202026-03-27%20145600.png)
 
 
 ## Task 1. Identify suspicious email activity
