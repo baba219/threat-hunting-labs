@@ -410,7 +410,7 @@ Focus on:
 
 * event.action:"setIamPolicy"
 * High-impact roles such as roles/owner
-* Actor identity and timing correlatio
+* Actor identity and timing correlation
 
 Mapped technique:
 

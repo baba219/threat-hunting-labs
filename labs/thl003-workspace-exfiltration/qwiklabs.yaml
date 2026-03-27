@@ -1,0 +1,111 @@
+schema_version: 2
+default_locale: en
+title: Workspace Data Exfiltration Investigation
+description: Investigate a SaaS-based attack chain involving phishing, account compromise,
+  and data exfiltration in a Google Workspace–like environment using Kibana and Elasticsearch.
+  Analyze email, OAuth, admin audit, and Drive activity logs to identify phishing
+  delivery, detect credential or token abuse, uncover mailbox rule persistence, and
+  trace file access and external data transfer. Correlate multi-source telemetry to
+  reconstruct a complete attack timeline aligned with MITRE ATT&CK techniques.
+instruction:
+  type: md
+  uri: instructions/lab_3.md
+duration: 120
+max_duration: 120
+credits: 0
+level: fundamental
+tags:
+product_tags:
+role_tags:
+domain_tags:
+resources: []
+environment:
+  resources:
+  - type: gcp_project
+    id: project_0
+    startup_script:
+      type: qwiklabs
+      path: terraform
+    ssh_key_user: user_0
+    allowed_locations:
+    - us-central1-a
+    - us-east1-b
+    - us-east4-a
+    - us-west1-a
+  - type: gcp_user
+    id: user_0
+    permissions:
+    - project: project_0
+      roles:
+      - roles/owner
+  student_visible_outputs:
+  - label: Kibana URL
+    reference: project_0.startup_script.kibana_url
+  - label: Kibana Username
+    reference: project_0.startup_script.lab_user
+  - label: Kibana Password
+    reference: project_0.startup_script.lab_pass
+  - label: Console
+    reference: project_0.console_url
+  - label: username
+    reference: user_0.username
+  - label: password
+    reference: user_0.password
+assessment:
+  passing_percentage: 80
+  steps:
+  - title: Validate Suspicious Email Detection
+    locale_id: 37d462f8-bf26-4174-a91b-4d5b34084eac
+    maximum_score: 20
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL03-Phishing-Email.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_1_check
+  - title: Validate Mailbox Rule Detection
+    locale_id: f8fa94b3-06ee-4f2e-ac69-952a328557f0
+    maximum_score: 20
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL03-Mailbox-Persistence.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_2_check
+  - title: Validate Cloud Storage Access Detection
+    locale_id: dc9c4fb9-d193-40c1-ad1b-33788a8881ab
+    maximum_score: 20
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL03-Drive-Activity.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_3_check
+  - title: Validate External Sharing Detection
+    locale_id: d0c19b97-7559-43e4-ae64-e89693fd7b8b
+    maximum_score: 20
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL03-External-Sharing.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_4_check
+  - title: Validate SaaS Exfiltration Confirmation
+    locale_id: fc31b6da-1bf3-4e42-80ee-42ca264b404b
+    maximum_score: 20
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL03-Exfiltration-Audit.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_5_check
