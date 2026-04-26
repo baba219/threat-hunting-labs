@@ -1,0 +1,95 @@
+schema_version: 2
+default_locale: en
+title: IOC-Driven Threat Hunting and Behavioral Detection
+description: Practice IOC-driven threat hunting by enriching indicators of compromise
+  (IP, domain, hash, user, OAuth client) using Elasticsearch telemetry. Pivot across
+  network, DNS, authentication, and workload logs in Kibana to uncover related activity
+  and expand investigations beyond initial IOC matches. Develop hypothesis-driven
+  hunts to identify attacker behaviors such as command-and-control, privilege escalation,
+  and lateral movement. Transform IOC findings into behavioral detection logic aligned
+  with MITRE ATT&CK.
+instruction:
+  type: md
+  uri: instructions/lab_4.md
+duration: 120
+max_duration: 120
+credits: 0
+level: fundamental
+tags:
+product_tags:
+role_tags:
+domain_tags:
+resources: []
+environment:
+  resources:
+  - type: gcp_project
+    id: project_0
+    startup_script:
+      type: qwiklabs
+      path: terraform
+    ssh_key_user: user_0
+    allowed_locations:
+    - us-central1-a
+    - us-east1-b
+    - us-east4-a
+    - us-west1-a
+  - type: gcp_user
+    id: user_0
+    permissions:
+    - project: project_0
+      roles:
+      - roles/owner
+  student_visible_outputs:
+  - label: Kibana URL
+    reference: project_0.startup_script.kibana_url
+  - label: Kibana Username
+    reference: project_0.startup_script.lab_user
+  - label: Kibana Password
+    reference: project_0.startup_script.lab_pass
+assessment:
+  passing_percentage: 80
+  steps:
+  - title: Validate IOC Network Investigation
+    locale_id: 9aa31f9f-e997-42a4-8f51-696c79e303cb
+    maximum_score: 25
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL04-IOC-Network.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_1_check
+  - title: Validate Malicious Execution Detection
+    locale_id: 520aff03-c0b0-4e46-8d4d-14e809e6d757
+    maximum_score: 25
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL04-Hash-Execution.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_2_check
+  - title: Validate Behavioral Hunting Detection
+    locale_id: 61f3085d-2646-4799-8e09-087f945cf26a
+    maximum_score: 25
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL04-Behavioral-Hunt.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_3_check
+  - title: Validate Persistence and Cloud Abuse
+    locale_id: 14568318-fd23-4916-8e25-886e563a089c
+    maximum_score: 25
+    student_messages:
+      success: Step completed! Saved search found in Kibana.
+      no_kibana: Kibana is not ready yet. Wait a few minutes and try again.
+      no_saved_search: Please save the query exactly as THL04-Persistence-Cloud.
+    services:
+    - project_0.ComputeV1
+    - user_0.SSH
+    method_name: step_4_check
