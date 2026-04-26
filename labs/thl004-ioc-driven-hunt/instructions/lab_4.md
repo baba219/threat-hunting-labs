@@ -55,25 +55,74 @@ Before you start, you should be familiar with:
 
 ## Setup
 
+
+
 **Before you click the Start Lab button**
 
 Read these instructions carefully before starting the lab.
 
-* **Labs are timed.**
-* **You cannot pause the lab.**
-* This is a **simulation environment** with temporary credentials.
+* **Labs are timed.** When you click **Start Lab**, the timer starts immediately and shows how long your lab environment will remain available.
+* **You cannot pause the lab.** Once the lab has started, the time continues to run until the session ends.
+* This is a **simulation environment**. You will receive **temporary credentials** to sign in to Kibana for the duration of the lab.
 
 To complete this lab, you need:
 
-* A modern web browser (Chrome recommended)
+* Access to a standard internet browser (Chrome browser recommended).
 
 <div><ql-infobox>
-<strong>Note:</strong> Use an Incognito or private browser window.
+
+<strong>Note:</strong> Use an Incognito or private browser window to run this lab. This prevents conflicts with any existing sessions that may affect access to the lab environment.
 </ql-infobox></div>
 
 <div><ql-infobox>
-<strong>Note:</strong> Allow <strong>5 minutes</strong> for environment initialization.
+
+<strong>Note:</strong> After clicking <strong>Start Lab</strong>, please allow <strong>5 minutes</strong> for the environment to fully initialize. During this time, Elasticsearch, Kibana, and the simulated Workspace telemetry are starting and data is being ingested. If Kibana does not load immediately, wait a few minutes and refresh the page. The lab timer continues to run during initialization.
 </ql-infobox></div>
+
+**How to start your lab and access Kibana**
+
+### Step 1: Launch the Lab Environment
+
+1. Click **Start Lab** to launch your investigation environment.
+
+On the left is the **Lab details** pane which is populated with the temporary credentials needed for this lab.
+
+![Workspace Attack Diagram](https://raw.githubusercontent.com/baba219/threat-hunting-labs/baba-structure-gps-thr/labs/thl004-ioc-driven-hunt/instructions/img/Screenshot%202026-03-03%20072948.png)
+
+### Step 2: Access Kibana
+
+2. Wait for the environment to initialize. Allow **5 minutes** for Kibana to become accessible.
+3. In the left panel, copy the **Kibana URL** provided.
+4. Paste the URL into your browser and press **Enter**.
+5. If you see a message saying **"This site doesn't support a secure connection"**, click **Continue to site** to proceed.
+6. In the left panel, copy the **Kibana Username** and **Kibana Password**.
+7. Paste the credentials into the login page and click **Log in**.
+8. Dismiss initial warnings inside Kibana.
+
+<div><ql-infobox>
+
+<strong>Tip:</strong> Keep the lab instructions and the Kibana page open in separate windows, side-by-side, to make investigation easier.
+</ql-infobox></div>
+
+**Verify access to the lab environment**
+
+After signing in, confirm that you have access to the investigation environment.
+
+1. In Kibana, open **Discover**.
+2. Open the **Data view** selector.
+
+You should see the following data views:
+
+* network-flow
+* dns-logs
+* auth-logs
+* audit-logs
+* workload-telemetry
+* cloud-storage
+
+**Expected result:**
+
+You successfully access Kibana and confirm that all required data views are available for the lab.
 
 
 ## Scenario
@@ -87,6 +136,7 @@ The campaign is known to:
 * Execute payloads on compromised hosts
 * Abuse valid accounts and cloud privileges
 * Stage or transfer data to external destinations
+
 
 ### Provided IOC Feed
 
@@ -112,6 +162,8 @@ Your goal is to:
 * Identify attacker behavior
 * Confirm or refute suspected compromise
 * Build detections
+
+![Workspace Attack Diagram](https://raw.githubusercontent.com/baba219/threat-hunting-labs/baba-structure-gps-thr/labs/thl004-ioc-driven-hunt/instructions/img/Screenshot%202026-04-26%20163051.png)
 
 
 ## Task 1. Analyze the IOC feed and form hypotheses
