@@ -1,0 +1,51 @@
+schema_version: 2
+default_locale: en
+title: Module 7 — Full-Scope Adversary Hunt
+description: Investigate a realistic multi-stage adversary campaign using Elastic
+  Security. Correlate identity, SaaS, workload, DNS, network, and cloud telemetry
+  to reconstruct the full attack chain.
+instruction:
+  type: md
+  uri: instructions/module_7.md
+duration: 120
+max_duration: 120
+credits: 0
+level: fundamental
+tags:
+- gps009
+product_tags:
+role_tags:
+domain_tags:
+resources: []
+environment:
+  resources:
+  - type: gcp_project
+    id: project_0
+    startup_script:
+      type: qwiklabs
+      path: terraform
+    ssh_key_user: user_0
+    allowed_locations:
+    - us-central1-a
+    - us-east1-b
+    - us-east4-a
+    - us-west1-a
+  - type: gcp_user
+    id: user_0
+    permissions:
+    - project: project_0
+      roles:
+      - roles/owner
+  student_visible_outputs:
+  - label: Kibana URL
+    reference: project_0.startup_script.kibana_url
+  - label: Kibana Username
+    reference: project_0.startup_script.lab_user
+  - label: Kibana Password
+    reference: project_0.startup_script.lab_pass
+  - label: Console
+    reference: project_0.console_url
+  - label: Username
+    reference: user_0.username
+  - label: Password
+    reference: user_0.password
