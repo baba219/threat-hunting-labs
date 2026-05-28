@@ -110,6 +110,8 @@ SOC analysts must correlate:
 
 to reconstruct the full adversary attack chain.
 
+![Workspace Attack Diagram](https://raw.githubusercontent.com/baba219/threat-hunting-labs/baba-structure-gps-thr/labs/Module%207%20—%20Full-Scope%20Adversary%20Hunt/instructions/img/Screenshot%202026-05-28%20130508.png)
+
 
 # Investigation Objectives
 
