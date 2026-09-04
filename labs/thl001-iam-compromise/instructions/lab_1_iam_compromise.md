@@ -87,11 +87,10 @@ After signing in, confirm that you have access to the investigation environment.
 1. In the upper-left corner of Kibana, click the hamburger menu (☰), then select **Discover**.
 2. In Discover, locate the blue **Data view** drop-down in the upper-left area of the page. It may currently display `auth-logs`.
 3. Open the Data view selector and confirm that the following data views are available:
-
-- auth-logs
-- audit-logs
-- service-accounts
-- iam-activity
+   - auth-logs
+   - audit-logs
+   - service-accounts
+   - iam-activity
 
 **Expected result:**
 
@@ -536,5 +535,5 @@ Ending the lab removes access to the investigation environment and associated re
 
 If you return to the environment after ending the lab, you will be automatically signed out.
 
-**Manual Last Updated:** February 2026
+**Manual Last Updated:** August 2026
 **Lab Last Tested:** February 2026
